@@ -45,11 +45,10 @@ const char hott_flight_mode_strings[NUM_MODES+1][10] = {
 };
 
 //constructor
-AP_HoTT_Telem::AP_HoTT_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, Location &current_loc, Compass &compass) :
+AP_HoTT_Telem::AP_HoTT_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, Location &current_loc) :
     _ahrs(ahrs),
     _battery(battery),
     _current_loc(current_loc),
-    _compass(compass),
     _port(NULL),
     _initialised_uart(false),
     _mode(0),
@@ -389,7 +388,7 @@ void AP_HoTT_Telem::update_gps_data()
     _hott_gps_msg.gps_satelites = gps.num_sats();
     
     // Compass
-    _hott_gps_msg.angle_compass = ToDeg(_compass.calculate_heading(_ahrs.get_rotation_body_to_ned())) / 2;
+        _hott_gps_msg.angle_compass = ToDeg(_ahrs.get_compass()->calculate_heading(_ahrs.get_rotation_body_to_ned())) / 2;
     
     // Roll/Nick Angle
     _hott_gps_msg.angle_roll = _ahrs.roll_sensor / 200;
@@ -463,7 +462,7 @@ void AP_HoTT_Telem::update_vario_data()
     (int16_t &)_hott_vario_msg.climbrate10s_L = 30000 + _climbrate10s;
 
     // Compass
-    _hott_vario_msg.compass_direction = ToDeg(_compass.calculate_heading(_ahrs.get_rotation_body_to_ned())) / 2;
+    _hott_vario_msg.compass_direction = ToDeg(_ahrs.get_compass()->calculate_heading(_ahrs.get_rotation_body_to_ned())) / 2;
     
     // Armed Text
     char *pArmedStr = (char *)DISARMED_STR;
