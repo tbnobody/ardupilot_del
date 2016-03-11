@@ -311,24 +311,28 @@ void AP_HoTT_Telem::processClimbrate(int16_t currentAltitude) {
     _climbrate10s = altitudeData[x] - altitudeData[nextData];
 }
 
+uint16_t AP_HoTT_Telem::get_altitude_rel()
+{
+    if (_current_loc.flags.relative_alt) {
+        return 500 + (_current_loc.alt / 100);
+    } else {
+        return 500 + ((_current_loc.alt - _ahrs.get_home().alt) / 100);
+    }
+}
+
 void AP_HoTT_Telem::update_gps_data()
 {
 	  const AP_GPS &gps = _ahrs.get_gps();
 
-    // Altitude
+    // Mean sea level altitude
     if (_current_loc.flags.relative_alt) {
-    	  // Mean sea level altitude
         (uint16_t &)_hott_gps_msg.msl_altitude_L = (_current_loc.alt + _ahrs.get_home().alt) / 100;
-        
-         // Meters above ground
-        (uint16_t &)_hott_gps_msg.altitude_L = 500 + (_current_loc.alt / 100);
     } else {
-    	  // Mean sea level altitude
         (uint16_t &)_hott_gps_msg.msl_altitude_L = _current_loc.alt / 100;
-        
-        // Meters above ground
-        (uint16_t &)_hott_gps_msg.altitude_L = 500 + ((_current_loc.alt - _ahrs.get_home().alt) / 100);
     }
+    
+    // Altitude meters above ground
+    (uint16_t &)_hott_gps_msg.altitude_L = get_altitude_rel();
     
     // Flight Direction
     _hott_gps_msg.flight_direction = gps.ground_course_cd() / 200; // in 2* steps
@@ -388,7 +392,7 @@ void AP_HoTT_Telem::update_gps_data()
     _hott_gps_msg.gps_satelites = gps.num_sats();
     
     // Compass
-        _hott_gps_msg.angle_compass = ToDeg(_ahrs.get_compass()->calculate_heading(_ahrs.get_rotation_body_to_ned())) / 2;
+    _hott_gps_msg.angle_compass = ToDeg(_ahrs.get_compass()->calculate_heading(_ahrs.get_rotation_body_to_ned())) / 2;
     
     // Roll/Nick Angle
     _hott_gps_msg.angle_roll = _ahrs.roll_sensor / 200;
@@ -422,7 +426,10 @@ void AP_HoTT_Telem::update_eam_data()
     // Climbrate
     _hott_eam_msg.climbrate3s             = 120   + (_climbrate3s / 100);  // 0 m/3s using filtered data here
     (uint16_t &)_hott_eam_msg.climbrate_L = 30000 + _climbrate1s;
-    
+
+    // Altitude
+    (int16_t &)_hott_eam_msg.altitude_L = get_altitude_rel();
+
     // Electric time. Time the APM is ARMED
     _hott_eam_msg.electric_min = _electric_time / 60;
     _hott_eam_msg.electric_sec = _electric_time % 60;
@@ -440,11 +447,7 @@ void AP_HoTT_Telem::update_vario_data()
     static int16_t min_altitude = 0;
 
     // Altitude
-    if (_current_loc.flags.relative_alt) {
-        (uint16_t &)_hott_vario_msg.altitude_L = 500 + (_current_loc.alt / 100);
-    } else {
-        (uint16_t &)_hott_vario_msg.altitude_L = 500 + ((_current_loc.alt - _ahrs.get_home().alt) / 100);
-    }
+    (uint16_t &)_hott_vario_msg.altitude_L = get_altitude_rel();
     
     // Altitude Max
     if(_hott_vario_msg.altitude_L > max_altitude && _armed) //calc only in ARMED mode

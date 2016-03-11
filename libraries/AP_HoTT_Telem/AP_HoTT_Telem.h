@@ -74,8 +74,10 @@ private:
     // processClimbrate - calculates and maintans climbrate changes
     //  called every 1s with current altitude as input
     void processClimbrate(int16_t currentAltitude);
-	
-	
+	  
+	  // get_altitude_rel - 
+	  uint16_t get_altitude_rel();
+	  
     AP_AHRS &_ahrs;                         // reference to attitude estimate
     AP_BattMonitor &_battery;               // reference to battery monitor object
     Location &_current_loc;                 // reference to current_loc object
