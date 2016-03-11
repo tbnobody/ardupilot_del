@@ -27,7 +27,7 @@
 class AP_HoTT_Alarm
 {
 public:
-    struct _hott_alarm_event_T {
+    struct HoTT_Alarm_Event_t {
         uint16_t alarm_time;        // Alarm play time in 1sec units
         uint16_t alarm_time_replay; // Alarm repeat time in 1sec. units. 0 -> One time alarm
                                     // forces a delay between new alarms of the same kind
@@ -36,39 +36,49 @@ public:
         uint8_t alarm_num;          // Alarm number 0..255 (A-Z)
         uint8_t alarm_profile;      // profile id ie EAM_SENSOR_ID
     };
-    typedef struct _hott_alarm_event_T _hott_alarm_event;
 
-    //constructor
+    // constructor
     AP_HoTT_Alarm();
-    
-    bool add(struct _hott_alarm_event_T *alarm);
-    
-    uint8_t getAlarmForProfileId(uint8_t hottProfileId, _hott_alarm_event &e);
 
+    // add - adds an alarm to active queue
+    bool add(HoTT_Alarm_Event_t *alarm);
+
+    uint8_t getAlarmForProfileId(uint8_t hottProfileId, HoTT_Alarm_Event_t &e);
+
+    // scheduler - active alarm scheduler
+    //  should be called every second
     void scheduler(void);
-    
+
+    // update_replay_queue - updates replay delay queue
+    //  should be called every second
     void update_replay_queue(void);
 
 private:
-    void add_replay(struct _hott_alarm_event_T *alarm);
-    
-    bool exists(struct _hott_alarm_event_T *alarm);
+    // add_replay - adds an alarm to replay queue
+    void add_replay(HoTT_Alarm_Event_t *alarm);
 
-    bool active_exists(struct _hott_alarm_event_T *alarm);
-    
-    bool replay_exists(struct _hott_alarm_event_T *alarm);
-    
+    // exists - checks if an alarm exists
+    bool exists(HoTT_Alarm_Event_t *alarm);
+
+    // active_exists - checks if an alarm exists in active queue
+    bool active_exists(HoTT_Alarm_Event_t *alarm);
+
+    // replay_exists - checks if an alarm exists in replay queue
+    bool replay_exists(HoTT_Alarm_Event_t *alarm);
+
+    // remove - removes an alarm from active queue
+    //  first alarm at offset 1
     void remove(uint8_t num);
-    
+
+    // remove_replay - removes an alarm from replay queue
+    //  first alarm at offset 1
     void remove_replay(uint8_t num);
-    
+
     uint8_t _alarmCnt;
-    
     uint8_t _activeAlarm; //  Current active voice alarm number
-    
     uint8_t _alarm_ReplayCnt;
-    
-    _hott_alarm_event _alarm_queue[HOTT_ALARM_QUEUE_MAX];
-    _hott_alarm_event _alarm_replay_queue[HOTT_ALARM_QUEUE_MAX];
+
+    HoTT_Alarm_Event_t _alarm_queue[HOTT_ALARM_QUEUE_MAX];
+    HoTT_Alarm_Event_t _alarm_replay_queue[HOTT_ALARM_QUEUE_MAX];
 };
 #endif
