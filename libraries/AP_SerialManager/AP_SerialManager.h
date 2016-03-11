@@ -51,6 +51,11 @@
 #define AP_SERIALMANAGER_FRSKY_BUFSIZE_RX       0
 #define AP_SERIALMANAGER_FRSKY_BUFSIZE_TX       0
 
+// Hott default baud rates
+#define AP_SERIALMANAGER_HOTT_BAUD              19200
+#define AP_SERIALMANAGER_HOTT_BUFSIZE_RX        0
+#define AP_SERIALMANAGER_HOTT_BUFSIZE_TX        0
+
 // GPS default baud rates and buffer sizes
 // we need a 256 byte buffer for some GPS types (eg. UBLOX)
 #define AP_SERIALMANAGER_GPS_BAUD               38400
@@ -82,6 +87,7 @@ public:
         SerialProtocol_AlexMos = 7,
         SerialProtocol_SToRM32 = 8,
         SerialProtocol_Lidar = 9,
+        SerialProtocol_HoTT = 10,
     };
 
     // Constructor

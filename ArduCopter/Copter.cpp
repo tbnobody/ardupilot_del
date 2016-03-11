@@ -63,6 +63,9 @@ Copter::Copter(void) :
 #if FRSKY_TELEM_ENABLED == ENABLED
     frsky_telemetry(ahrs, battery),
 #endif
+#if HOTT_TELEM_ENABLED == ENABLED
+    hott_telemetry(ahrs, battery, current_loc, compass),
+#endif
     climb_rate(0),
     sonar_alt(0),
     sonar_alt_health(0),

@@ -760,6 +760,11 @@
   #  define FRSKY_TELEM_ENABLED          ENABLED
 #endif
 
+//use this to completely disable HoTT TELEM
+#ifndef HOTT_TELEM_ENABLED
+  #  define HOTT_TELEM_ENABLED          ENABLED
+#endif
+
 /*
   build a firmware version string.
   GIT_VERSION comes from Makefile builds

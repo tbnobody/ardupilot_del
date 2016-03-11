@@ -88,6 +88,7 @@
 #include <AP_BattMonitor/AP_BattMonitor.h>     // Battery monitor library
 #include <AP_BoardConfig/AP_BoardConfig.h>     // board configuration library
 #include <AP_Frsky_Telem/AP_Frsky_Telem.h>
+#include <AP_HoTT_Telem/AP_HoTT_Telem.h>
 #include <AP_LandingGear/AP_LandingGear.h>     // Landing Gear library
 #include <AP_Terrain/AP_Terrain.h>
 #include <AP_ADSB/AP_ADSB.h>
@@ -387,6 +388,11 @@ private:
     // FrSky telemetry support
 #if FRSKY_TELEM_ENABLED == ENABLED
     AP_Frsky_Telem frsky_telemetry;
+#endif
+
+    // HoTT telemetry support
+#if HOTT_TELEM_ENABLED == ENABLED
+    AP_HoTT_Telem hott_telemetry;
 #endif
 
     // Altitude
@@ -975,6 +981,7 @@ private:
     void update_auto_armed();
     void check_usb_mux(void);
     void frsky_telemetry_send(void);
+    void hott_telemetry_send(void);
     bool should_log(uint32_t mask);
     bool current_mode_has_user_takeoff(bool must_navigate);
     bool do_user_takeoff(float takeoff_alt_cm, bool must_navigate);

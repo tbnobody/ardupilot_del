@@ -17,6 +17,7 @@ def build(bld):
             'AP_Camera',
             'AP_EPM',
             'AP_Frsky_Telem',
+            'AP_Hott_Telem',
             'AP_IRLock',
             'AP_InertialNav',
             'AP_LandingGear',

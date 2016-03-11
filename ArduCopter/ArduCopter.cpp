@@ -143,6 +143,9 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
 #if FRSKY_TELEM_ENABLED == ENABLED
     SCHED_TASK(frsky_telemetry_send,   5,     75),
 #endif
+#if HOTT_TELEM_ENABLED == ENABLED
+    SCHED_TASK(hott_telemetry_send,    3.3,   75),
+#endif
 #if EPM_ENABLED == ENABLED
     SCHED_TASK(epm_update,            10,     75),
 #endif

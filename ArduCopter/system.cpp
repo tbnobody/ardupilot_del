@@ -158,6 +158,11 @@ void Copter::init_ardupilot()
     frsky_telemetry.init(serial_manager);
 #endif
 
+#if HOTT_TELEM_ENABLED == ENABLED
+    // setup HoTT
+    hott_telemetry.init(serial_manager);
+#endif
+
     // identify ourselves correctly with the ground station
     mavlink_system.sysid = g.sysid_this_mav;
 
@@ -432,6 +437,18 @@ void Copter::check_usb_mux(void)
 void Copter::frsky_telemetry_send(void)
 {
     frsky_telemetry.send_frames((uint8_t)control_mode);
+}
+#endif
+
+// hott_telemetry_send - sends telemetry data using hott telemetry
+//  should be called at 5Hz by scheduler
+#if HOTT_TELEM_ENABLED == ENABLED
+void Copter::hott_telemetry_send(void)
+{
+    hott_telemetry.update_data((uint8_t)control_mode, 
+        wp_distance, wp_bearing, 
+        home_distance, home_bearing,
+        motors.armed());
 }
 #endif
 
