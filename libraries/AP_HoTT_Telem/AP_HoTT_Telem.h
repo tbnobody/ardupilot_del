@@ -33,7 +33,7 @@ class AP_HoTT_Telem
 {
 public:
     //constructor
-    AP_HoTT_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, Location &current_loc);
+    AP_HoTT_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, Location &current_loc, AP_Baro &barometer);
 
     // init - perform require initialisation including detecting which protocol to use
     void init(const AP_SerialManager& serial_manager);
@@ -78,6 +78,7 @@ private:
     AP_AHRS &_ahrs;                         // reference to attitude estimate
     AP_BattMonitor &_battery;               // reference to battery monitor object
     Location &_current_loc;                 // reference to current_loc object
+    AP_Baro &_barometer;                    // reference to barometer object
     AP_HAL::UARTDriver *_port;              // UART used to send data to receiver
     bool _initialised_uart;                 // true when we have detected the protocol and UART has been initialised
 

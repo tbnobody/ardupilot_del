@@ -56,10 +56,11 @@ const char hott_flight_mode_strings[NUM_MODES+1][10] = {
 };
 
 //constructor
-AP_HoTT_Telem::AP_HoTT_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, Location &current_loc) :
+AP_HoTT_Telem::AP_HoTT_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, Location &current_loc, AP_Baro &barometer) :
     _ahrs(ahrs),
     _battery(battery),
     _current_loc(current_loc),
+    _barometer(barometer),
     _port(NULL),
     _initialised_uart(false),
     _mode(0),
@@ -458,6 +459,9 @@ void AP_HoTT_Telem::update_eam_data()
 
     // Ground Speed
     (uint16_t &)_hott_eam_msg.speed_L = ((float)((gps.ground_speed()) * 3.6));
+    
+    // Temperature
+    _hott_eam_msg.temp1 = 20 + _barometer.get_temperature();
     
     // Check alarms
     _hott_eam_msg.alarm_invers1 = 0;
