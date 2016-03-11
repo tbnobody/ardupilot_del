@@ -22,19 +22,12 @@
 #include <AP_SerialManager/AP_SerialManager.h>
 #include <AP_Common/AP_Common.h>
 #include <AP_Compass/AP_Compass.h>
+#include "AP_HoTT_Alarm.h"
 #include "hott_msgs.h"
 
 #if APM_BUILD_TYPE(APM_BUILD_ArduCopter)
 #include "../../ArduCopter/defines.h"
 #endif
-
-//Delay before a HoTT answer. At least 5ms.
-#define POST_READ_DELAY_IN_MS    5
-
-//Delay between each HoTT msg bytes. Should be slightly above 2ms
-#define POST_WRITE_DELAY_IN_MS   2
-
-#define ALTITUDE_HISTORY_DATA_COUNT 10
 
 class AP_HoTT_Telem
 {
@@ -74,6 +67,10 @@ private:
     // processClimbrate - calculates and maintans climbrate changes
     //  called every 1s with current altitude as input
     void processClimbrate(int16_t currentAltitude);
+    
+    void eamCheck_mAh(void);
+    
+    void eamCheck_mainPower(void);
 	  
 	  // get_altitude_rel - 
 	  uint16_t get_altitude_rel();
@@ -122,5 +119,8 @@ private:
     
     // electrical time
     uint32_t _electric_time;  //time in ARMED mode in seconds
+    
+    AP_HoTT_Alarm _alarms;
+    
 };
 #endif

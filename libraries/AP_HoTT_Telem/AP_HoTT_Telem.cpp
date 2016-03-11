@@ -20,6 +20,17 @@
 #include "AP_HoTT_Telem.h"
 extern const AP_HAL::HAL& hal;
 
+//Min. time before low voltage alarm is triggered
+#define LOW_VOLTAGE_TIMESPAN    3
+
+//Delay before a HoTT answer. At least 5ms.
+#define POST_READ_DELAY_IN_MS    5
+
+//Delay between each HoTT msg bytes. Should be slightly above 2ms
+#define POST_WRITE_DELAY_IN_MS   1
+
+#define ALTITUDE_HISTORY_DATA_COUNT 10
+
 #define NUM_MODES   19
 const char hott_flight_mode_strings[NUM_MODES+1][10] = {
     "STABILIZE",    // 0
@@ -138,7 +149,16 @@ void AP_HoTT_Telem::update_data(uint8_t control_mode, uint32_t wp_distance, int3
         // update electrical time
         if(_armed)
             _electric_time++;
-    	  
+        
+        // perform checks
+        eamCheck_mAh();
+        eamCheck_mainPower();
+        
+        // Alarm scheduler
+        _alarms.scheduler();
+        
+        // Update replay queue
+        _alarms.update_replay_queue();
     }
 }
 
@@ -416,6 +436,8 @@ void AP_HoTT_Telem::update_gps_data()
 
 void AP_HoTT_Telem::update_eam_data()
 {
+	  static AP_HoTT_Alarm::_hott_alarm_event e = {0, 0, 0, 0, 0, 0}; //used to save visual alarm states
+	  	
 	  const AP_GPS &gps = _ahrs.get_gps();
 	  
     // Battery
@@ -436,6 +458,23 @@ void AP_HoTT_Telem::update_eam_data()
 
     // Ground Speed
     (uint16_t &)_hott_eam_msg.speed_L = ((float)((gps.ground_speed()) * 3.6));
+    
+    // Check alarms
+    _hott_eam_msg.alarm_invers1 = 0;
+    _hott_eam_msg.alarm_invers2 = 0;
+    _hott_eam_msg.warning_beeps = 0;
+    if(_alarms.getAlarmForProfileId(EAM_SENSOR_ID, e) != 0) {
+        _hott_eam_msg.warning_beeps = e.alarm_num;
+    }
+    _hott_eam_msg.alarm_invers1 = e.visual_alarm1;
+    _hott_eam_msg.alarm_invers2 = e.visual_alarm2;
+
+    // display ON when motors are armed
+    if (_armed) {
+        _hott_eam_msg.alarm_invers2 |= 0x80;
+    } else {
+        _hott_eam_msg.alarm_invers2 &= 0x7f;
+    }
 }
 
 void AP_HoTT_Telem::update_vario_data()
@@ -482,4 +521,69 @@ void AP_HoTT_Telem::update_vario_data()
     
 	  // Flight Mode
 	  memcpy((uint8_t*)&_hott_vario_msg.text_msg[len + 1], hott_flight_mode_strings[_mode], strlen(hott_flight_mode_strings[_mode]));
+}
+
+void AP_HoTT_Telem::eamCheck_mAh(void)
+{
+    AP_HoTT_Alarm::_hott_alarm_event _hott_ema_alarm_event;
+    uint32_t battery_pack_capacity = 0;
+
+		enum ap_var_type var_type;
+		AP_Param *vp;
+		vp = AP_Param::find("BATT_CAPACITY", &var_type);
+		if(vp != NULL) {
+		    if(var_type == AP_PARAM_INT32) {
+				    battery_pack_capacity = ((AP_Int32 *)vp)->get();
+			  }
+		} else {
+			  battery_pack_capacity = 0;	//not found
+		}
+		
+    if((battery_pack_capacity < _battery.current_total_mah()) && (battery_pack_capacity > 0 )) {
+        _hott_ema_alarm_event.alarm_time = 6;   // 1sec units
+        _hott_ema_alarm_event.alarm_time_replay = 15;   // 1sec units
+        _hott_ema_alarm_event.visual_alarm1 = 0x01; // blink mAh
+        _hott_ema_alarm_event.visual_alarm2 = 0;
+        _hott_ema_alarm_event.alarm_num = HOTT_ALARM_NUM('V');
+        _hott_ema_alarm_event.alarm_profile = EAM_SENSOR_ID;
+        _alarms.add(&_hott_ema_alarm_event);
+    }
+}
+
+void AP_HoTT_Telem::eamCheck_mainPower(void)
+{
+    static uint8_t lowVoltageCounter = 0;
+    float		main_battery_low_voltage = 0;
+    
+  	enum ap_var_type var_type;
+		AP_Param *vp;
+		
+		vp = AP_Param::find("FS_BATT_VOLTAGE", &var_type);
+		if(vp != NULL) {
+			  if(var_type == AP_PARAM_FLOAT) {
+				  main_battery_low_voltage = ((AP_Float *)vp)->get();
+			  }
+		} else {
+			  main_battery_low_voltage = 0.0f;
+		}
+	
+    if((_battery.voltage() <= main_battery_low_voltage)  && _battery.voltage() > 0.0) {
+        if(lowVoltageCounter < LOW_VOLTAGE_TIMESPAN) {
+            // voltage should be low for at least for LOW_VOLTAGE_TIMESPAN seconds
+            lowVoltageCounter++;
+            return;
+        }
+
+        AP_HoTT_Alarm::_hott_alarm_event _hott_ema_alarm_event;
+        _hott_ema_alarm_event.alarm_time = 6;   // 1 sec units
+        _hott_ema_alarm_event.alarm_time_replay = 30; // 1sec unit
+        _hott_ema_alarm_event.visual_alarm1 = 0x80; // blink main power
+        _hott_ema_alarm_event.visual_alarm2 = 0;
+        _hott_ema_alarm_event.alarm_num = HOTT_ALARM_NUM('P');
+        _hott_ema_alarm_event.alarm_profile = EAM_SENSOR_ID;
+
+        _alarms.add(&_hott_ema_alarm_event);
+    } else {
+        lowVoltageCounter = 0;
+    }
 }
