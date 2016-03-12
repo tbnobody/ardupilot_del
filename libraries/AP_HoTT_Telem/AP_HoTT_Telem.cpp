@@ -80,7 +80,7 @@ AP_HoTT_Telem::AP_HoTT_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, Location &c
     _climbrate3s(0),
     _climbrate10s(0),
     _electric_time(0)
-    {}
+{}
 
 // init - perform require initialisation including detecting which protocol to use
 void AP_HoTT_Telem::init(const AP_SerialManager& serial_manager)
@@ -148,8 +148,9 @@ void AP_HoTT_Telem::update_data(uint8_t control_mode, uint32_t wp_distance, int3
         process_climbrate(get_altitude_rel());
 
         // update electrical time
-        if (_armed)
+        if (_armed) {
             _electric_time++;
+        }
 
         // perform checks
         eam_check_mah();
@@ -187,7 +188,7 @@ void AP_HoTT_Telem::hott_tick(void)
     }
 
     // check if there is any data to send
-    switch(_hott_status) {
+    switch (_hott_status) {
     case HottSendGPS:
         send_data((uint8_t*)&_hott_gps_msg);
         break;
@@ -286,8 +287,8 @@ void AP_HoTT_Telem::convert_lat_long(float degree, uint8_t &posNS_EW, uint16_t &
     }
 
     int16_t deg = int (degree) ;
-    float mmmm = 60 * ( degree - deg );
-    int16_t minu = (int( mmmm ));
+    float mmmm = 60 * (degree - deg);
+    int16_t minu = (int(mmmm));
     mmmm -= minu;
     degSeconds = mmmm * 1E4;
     degMinutes = (deg * 100) + minu;
@@ -303,8 +304,9 @@ void AP_HoTT_Telem::process_climbrate(int16_t current_altitude)
 
     //clear data?
     if (next_data == -1) {
-        for (int i = 0; i < ALTITUDE_HISTORY_DATA_COUNT; i++)
+        for (int i = 0; i < ALTITUDE_HISTORY_DATA_COUNT; i++) {
             altitude_data[i] = 0;
+        }
         next_data = 0;
     }
 
@@ -317,8 +319,9 @@ void AP_HoTT_Telem::process_climbrate(int16_t current_altitude)
             got_all_datapoints = true;    //ready for calculations
         }
     }
-    if (!got_all_datapoints)   //wait for all data points requred for calculation
+    if (!got_all_datapoints) { //wait for all data points requred for calculation
         return;
+    }
 
     int8_t y = (x - 1 < 0) ? ALTITUDE_HISTORY_DATA_COUNT - 1 : x - 1;
     _climbrate1s = altitude_data[x] - altitude_data[y];
@@ -362,7 +365,7 @@ void AP_HoTT_Telem::update_gps_data()
     (uint16_t &)_hott_gps_msg.gps_speed_L = (uint16_t)((float)((gps.ground_speed()) * 3.6));
 
     // GPS Status
-    switch(gps.status()) {
+    switch (gps.status()) {
     case AP_GPS::GPS_OK_FIX_3D:
         _hott_gps_msg.alarm_invers2 = 0;
         _hott_gps_msg.gps_fix_char  = '3';
@@ -386,7 +389,7 @@ void AP_HoTT_Telem::update_gps_data()
     }
 
     // Home distance
-    switch(_mode) {
+    switch (_mode) {
     case AUTO:
     case LOITER:
         //Use home direction field to display direction an distance to next waypoint
@@ -493,13 +496,15 @@ void AP_HoTT_Telem::update_vario_data()
     (uint16_t &)_hott_vario_msg.altitude_L = get_altitude_rel();
 
     // Altitude Max
-    if (_hott_vario_msg.altitude_L > max_altitude && _armed) //calc only in ARMED mode
+    if (_hott_vario_msg.altitude_L > max_altitude && _armed) { //calc only in ARMED mode
         max_altitude = _hott_vario_msg.altitude_L;
+    }
     (int16_t &)_hott_vario_msg.altitude_max_L = 500 + (max_altitude / 100);
 
     // Altitude Min
-    if (_hott_vario_msg.altitude_L < min_altitude && _armed) //calc only in ARMED mode
+    if (_hott_vario_msg.altitude_L < min_altitude && _armed) { //calc only in ARMED mode
         min_altitude = _hott_vario_msg.altitude_L;
+    }
     (int16_t &)_hott_vario_msg.altitude_min_L = 500 + (min_altitude / 100);
 
     // Climbrate
@@ -543,7 +548,7 @@ void AP_HoTT_Telem::eam_check_mah(void)
         battery_pack_capacity = 0;  //not found
     }
 
-    if ((battery_pack_capacity < _battery.current_total_mah()) && (battery_pack_capacity > 0 )) {
+    if ((battery_pack_capacity < _battery.current_total_mah()) && (battery_pack_capacity > 0)) {
         AP_HoTT_Alarm::HoTT_Alarm_Event_t hott_eam_alarm_event;
         hott_eam_alarm_event.alarm_time = 6;   // 1sec units
         hott_eam_alarm_event.alarm_time_replay = 15;   // 1sec units
@@ -567,7 +572,7 @@ void AP_HoTT_Telem::eam_check_main_power(void)
     vp = AP_Param::find("FS_BATT_VOLTAGE", &var_type);
     if (vp != NULL) {
         if (var_type == AP_PARAM_FLOAT) {
-          main_battery_low_voltage = ((AP_Float *)vp)->get();
+            main_battery_low_voltage = ((AP_Float *)vp)->get();
         }
     } else {
         main_battery_low_voltage = 0.0f;
