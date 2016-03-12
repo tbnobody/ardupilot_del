@@ -61,7 +61,7 @@ private:
     void update_vario_data();
 
     // convert_lat_long
-    void convert_lat_long(float degree, uint8_t &posNS_EW, uint16_t &degMinutes, uint16_t &degSeconds);
+    void convert_lat_long(float degree, uint8_t &pos_ns_ew, uint16_t &deg_minutes, uint16_t &deg_seconds);
 
     // processClimbrate - calculates and maintans climbrate changes
     //  called every 1s with current altitude as input

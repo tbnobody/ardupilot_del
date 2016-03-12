@@ -274,13 +274,13 @@ void AP_HoTT_Telem::send_data(uint8_t *buffer)
     }
 }
 
-void AP_HoTT_Telem::convert_lat_long(float degree, uint8_t &posNS_EW, uint16_t &degMinutes, uint16_t &degSeconds)
+void AP_HoTT_Telem::convert_lat_long(float degree, uint8_t &pos_ns_ew, uint16_t &deg_minutes, uint16_t &deg_seconds)
 {
     degree = degree / 10000000.0f;
     if (degree >= 0) {
-        posNS_EW = 0;
+        pos_ns_ew = 0;
     } else {
-        posNS_EW = 1;
+        pos_ns_ew = 1;
         degree = -degree;
     }
 
@@ -288,8 +288,8 @@ void AP_HoTT_Telem::convert_lat_long(float degree, uint8_t &posNS_EW, uint16_t &
     float mmmm = 60 * (degree - deg);
     int16_t minu = (int(mmmm));
     mmmm -= minu;
-    degSeconds = mmmm * 1E4;
-    degMinutes = (deg * 100) + minu;
+    deg_seconds = mmmm * 1E4;
+    deg_minutes = (deg * 100) + minu;
 }
 
 // process_climbrate - calculates and maintans climbrate changes
