@@ -87,6 +87,9 @@ void AP_HoTT_Telem::init(const AP_SerialManager& serial_manager)
 {
     // check for HoTT Port
     if ((_port = serial_manager.find_serial(AP_SerialManager::SerialProtocol_HoTT, 0))) {
+        // we don't want flow control
+        _port->set_flow_control(AP_HAL::UARTDriver::FLOW_CONTROL_DISABLE);
+
         hal.scheduler->register_io_process(FUNCTOR_BIND_MEMBER(&AP_HoTT_Telem::hott_tick, void));
 
         // Init GPS Module Message
@@ -110,11 +113,6 @@ void AP_HoTT_Telem::init(const AP_SerialManager& serial_manager)
         _hott_vario_msg.vario_sensor_id = VARIO_SENSOR_ID;
         _hott_vario_msg.sensor_id       = VARIO_SENSOR_TEXT_ID;
         _hott_vario_msg.stop_byte       = BINARY_MODE_STOP_BYTE;
-    }
-
-    if (_port != NULL) {
-        // we don't want flow control
-        _port->set_flow_control(AP_HAL::UARTDriver::FLOW_CONTROL_DISABLE);
     }
 }
 
@@ -496,14 +494,14 @@ void AP_HoTT_Telem::update_vario_data()
     (uint16_t &)_hott_vario_msg.altitude_L = get_altitude_rel();
 
     // Altitude Max
-    if (_hott_vario_msg.altitude_L > max_altitude && _armed) { //calc only in ARMED mode
-        max_altitude = _hott_vario_msg.altitude_L;
+    if ((int16_t &)_hott_vario_msg.altitude_L > max_altitude && _armed) { //calc only in ARMED mode
+        max_altitude = (int16_t &)_hott_vario_msg.altitude_L;
     }
     (int16_t &)_hott_vario_msg.altitude_max_L = 500 + (max_altitude / 100);
 
     // Altitude Min
-    if (_hott_vario_msg.altitude_L < min_altitude && _armed) { //calc only in ARMED mode
-        min_altitude = _hott_vario_msg.altitude_L;
+    if ((int16_t &)_hott_vario_msg.altitude_L < min_altitude && _armed) { //calc only in ARMED mode
+        min_altitude = (int16_t &)_hott_vario_msg.altitude_L;
     }
     (int16_t &)_hott_vario_msg.altitude_min_L = 500 + (min_altitude / 100);
 
