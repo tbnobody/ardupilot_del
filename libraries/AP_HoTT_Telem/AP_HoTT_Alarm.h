@@ -24,8 +24,7 @@
 
 #define HOTT_ALARM_NUM(a) (a - 0x40)
 
-class AP_HoTT_Alarm
-{
+class AP_HoTT_Alarm {
 public:
     struct HoTT_Alarm_Event_t {
         uint16_t alarm_time;        // Alarm play time in 1sec units
@@ -43,7 +42,7 @@ public:
     // add - adds an alarm to active queue
     bool add(HoTT_Alarm_Event_t *alarm);
 
-    uint8_t getAlarmForProfileId(uint8_t hottProfileId, HoTT_Alarm_Event_t &e);
+    uint8_t get_alarm_for_profile_id(uint8_t hott_profile_id, HoTT_Alarm_Event_t &e);
 
     // scheduler - active alarm scheduler
     //  should be called every second
@@ -74,9 +73,9 @@ private:
     //  first alarm at offset 1
     void remove_replay(uint8_t num);
 
-    uint8_t _alarmCnt;
-    uint8_t _activeAlarm; //  Current active voice alarm number
-    uint8_t _alarm_ReplayCnt;
+    uint8_t _alarm_cnt;
+    uint8_t _active_alarm; //  Current active voice alarm number
+    uint8_t _alarm_replay_cnt;
 
     HoTT_Alarm_Event_t _alarm_queue[HOTT_ALARM_QUEUE_MAX];
     HoTT_Alarm_Event_t _alarm_replay_queue[HOTT_ALARM_QUEUE_MAX];

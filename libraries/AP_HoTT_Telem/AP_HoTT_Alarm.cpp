@@ -20,61 +20,61 @@
 #include "AP_HoTT_Alarm.h"
 
 AP_HoTT_Alarm::AP_HoTT_Alarm():
-	  _alarmCnt(0),
-	  _activeAlarm(0),
-	  _alarm_ReplayCnt(0)
+	  _alarm_cnt(0),
+	  _active_alarm(0),
+	  _alarm_replay_cnt(0)
     {}
 
 // add - adds an alarm to active queue
 bool AP_HoTT_Alarm::add(HoTT_Alarm_Event_t *alarm)
 {
-    if(alarm == 0)
+    if (alarm == 0)
         return false;
 
-    if(_alarmCnt >= HOTT_ALARM_QUEUE_MAX)
+    if (_alarm_cnt >= HOTT_ALARM_QUEUE_MAX)
         return false;   // no more space left...
 
-    if(exists(alarm))
+    if (exists(alarm))
         return false;
 
     // we have a new alarm
-    memcpy(&_alarm_queue[_alarmCnt++], alarm, sizeof(HoTT_Alarm_Event_t));
+    memcpy(&_alarm_queue[_alarm_cnt++], alarm, sizeof(HoTT_Alarm_Event_t));
     return true;
 }
 
-uint8_t AP_HoTT_Alarm::getAlarmForProfileId(uint8_t hottProfileId, HoTT_Alarm_Event_t &e)
+uint8_t AP_HoTT_Alarm::get_alarm_for_profile_id(uint8_t hott_profile_id, HoTT_Alarm_Event_t &e)
 {
-    if(_alarmCnt == 0)
+    if (_alarm_cnt == 0)
         return 0;
 
-    uint8_t alarmCount = 0;
-    for(int i = 0; i <  _alarmCnt; i++) {
-        if(_alarm_queue[i].alarm_profile == hottProfileId) {
+    uint8_t alarm_count = 0;
+    for (int i = 0; i < _alarm_cnt; i++) {
+        if (_alarm_queue[i].alarm_profile == hott_profile_id) {
             e.visual_alarm1 |= _alarm_queue[i].visual_alarm1;
             e.visual_alarm2 |= _alarm_queue[i].visual_alarm2;
-            if(i == _activeAlarm - 1) {
+            if (i == _active_alarm - 1) {
                 // this alarm is also active
                 e.alarm_num = _alarm_queue[i].alarm_num;
             }
-            alarmCount++;
+            alarm_count++;
         }
     }
-    return alarmCount;
+    return alarm_count;
 }
 
 // scheduler - active alarm scheduler
 //  should be called every second
 void AP_HoTT_Alarm::scheduler(void)
 {
-    static uint8_t activeAlarmTimer = 3 * 50;
+    static uint8_t active_alarm_timer = 3 * 50;
 
-    if(_alarmCnt < 1)
+    if (_alarm_cnt < 1)
         return; // no alarms
 
-    for(uint8_t i = 0; i < _alarmCnt; i++) {
-        if(_alarm_queue[i].alarm_time == 0) {
+    for (uint8_t i = 0; i < _alarm_cnt; i++) {
+        if (_alarm_queue[i].alarm_time == 0) {
             // end of alarm, remove it
-            if(_alarm_queue[i].alarm_time_replay != 0)
+            if (_alarm_queue[i].alarm_time_replay != 0)
                 add_replay(&_alarm_queue[i]);
             remove(i + 1);    // first alarm at offset 1
             --i;    // correct counter
@@ -82,20 +82,20 @@ void AP_HoTT_Alarm::scheduler(void)
         }
     }
 
-    if(_activeAlarm != 0) { // is an alarm active
-        if (++activeAlarmTimer % 2 == 0) {    // every 1sec
-            _alarm_queue[_activeAlarm - 1].alarm_time--;
+    if (_active_alarm != 0) { // is an alarm active
+        if (++active_alarm_timer % 2 == 0) {    // every 1sec
+            _alarm_queue[_active_alarm - 1].alarm_time--;
         }
-        if (activeAlarmTimer < 50 * 2) // alter alarm every 2 sec
+        if (active_alarm_timer < 50 * 2) // alter alarm every 2 sec
             return;
     }
-    activeAlarmTimer = 0;
+    active_alarm_timer = 0;
 
-    if(++_activeAlarm > _alarmCnt) {
-        _activeAlarm = 1;
+    if (++_active_alarm > _alarm_cnt) {
+        _active_alarm = 1;
     }
-    if(_alarmCnt <= 0) {
-        _activeAlarm = 0;
+    if (_alarm_cnt <= 0) {
+        _active_alarm = 0;
         return;
     }
 }
@@ -103,23 +103,23 @@ void AP_HoTT_Alarm::scheduler(void)
 // add_replay - adds an alarm to replay queue
 void AP_HoTT_Alarm::add_replay(HoTT_Alarm_Event_t *alarm)
 {
-    if(alarm == 0)
+    if (alarm == 0)
         return;
-    if(_alarm_ReplayCnt >= HOTT_ALARM_QUEUE_MAX)
+    if (_alarm_replay_cnt >= HOTT_ALARM_QUEUE_MAX)
         return; // no more space left...
-    if(replay_exists(alarm))
+    if (replay_exists(alarm))
         return;
     // we have a new alarm
-    memcpy(&_alarm_replay_queue[_alarm_ReplayCnt++], alarm, sizeof(HoTT_Alarm_Event_t));
+    memcpy(&_alarm_replay_queue[_alarm_replay_cnt++], alarm, sizeof(HoTT_Alarm_Event_t));
 }
 
 // exists - checks if an alarm exists
 bool AP_HoTT_Alarm::exists(HoTT_Alarm_Event_t *alarm)
 {
-    if(active_exists(alarm))
+    if (active_exists(alarm))
         return true;
 
-    if(replay_exists(alarm))
+    if (replay_exists(alarm))
         return true;
 
     return false;
@@ -129,8 +129,8 @@ bool AP_HoTT_Alarm::exists(HoTT_Alarm_Event_t *alarm)
 bool AP_HoTT_Alarm::active_exists(HoTT_Alarm_Event_t *alarm)
 {
     // check active alarms
-    for(uint8_t i = 0; i < _alarmCnt; i++) {
-        if(_alarm_queue[i].alarm_num == alarm->alarm_num &&
+    for (uint8_t i = 0; i < _alarm_cnt; i++) {
+        if (_alarm_queue[i].alarm_num == alarm->alarm_num &&
             _alarm_queue[i].alarm_profile == alarm->alarm_profile) {
             // alarm exists.
             return true;
@@ -143,8 +143,8 @@ bool AP_HoTT_Alarm::active_exists(HoTT_Alarm_Event_t *alarm)
 bool AP_HoTT_Alarm::replay_exists(HoTT_Alarm_Event_t *alarm)
 {
     // check replay delay queue
-    for(uint8_t i = 0; i < _alarm_ReplayCnt; i++) {
-        if(_alarm_replay_queue[i].alarm_num == alarm->alarm_num &&
+    for (uint8_t i = 0; i < _alarm_replay_cnt; i++) {
+        if (_alarm_replay_queue[i].alarm_num == alarm->alarm_num &&
             _alarm_replay_queue[i].alarm_profile == alarm->alarm_profile) {
             // alarm exists
             return true;
@@ -157,34 +157,34 @@ bool AP_HoTT_Alarm::replay_exists(HoTT_Alarm_Event_t *alarm)
 //  first alarm at offset 1
 void AP_HoTT_Alarm::remove(uint8_t num)
 {
-    if(num > _alarmCnt || num == 0)    // has to be > 0
+    if (num > _alarm_cnt || num == 0)    // has to be > 0
         return; // possibile error
 
-    if(_alarmCnt != 1) {
-        memcpy(&_alarm_queue[num-1], &_alarm_queue[num], sizeof(HoTT_Alarm_Event_t) * (_alarmCnt - num) );
+    if (_alarm_cnt != 1) {
+        memcpy(&_alarm_queue[num-1], &_alarm_queue[num], sizeof(HoTT_Alarm_Event_t) * (_alarm_cnt - num) );
     }
-    --_alarmCnt;
+    --_alarm_cnt;
 }
 
 // remove_replay - removes an alarm from replay queue
 //  first alarm at offset 1
 void AP_HoTT_Alarm::remove_replay(uint8_t num)
 {
-    if(num > _alarm_ReplayCnt || num == 0) // has to be > 0
+    if (num > _alarm_replay_cnt || num == 0) // has to be > 0
         return; // possibile error
 
-    if(_alarm_ReplayCnt != 1) {
-        memcpy(&_alarm_replay_queue[num - 1], &_alarm_replay_queue[num], sizeof(HoTT_Alarm_Event_t) * (_alarm_ReplayCnt - num) );
+    if (_alarm_replay_cnt != 1) {
+        memcpy(&_alarm_replay_queue[num - 1], &_alarm_replay_queue[num], sizeof(HoTT_Alarm_Event_t) * (_alarm_replay_cnt - num) );
     }
-    --_alarm_ReplayCnt;
+    --_alarm_replay_cnt;
 }
 
 // update_replay_queue - updates replay delay queue
 //  should be called every second
 void AP_HoTT_Alarm::update_replay_queue(void)
 {
-    for(uint8_t i = 0; i <  _alarm_ReplayCnt; i++) {
-        if(--_alarm_replay_queue[i].alarm_time_replay == 0) {
+    for (uint8_t i = 0; i <  _alarm_replay_cnt; i++) {
+        if (--_alarm_replay_queue[i].alarm_time_replay == 0) {
             // remove it
             remove_replay(i + 1);
             i--;

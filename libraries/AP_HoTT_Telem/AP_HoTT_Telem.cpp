@@ -145,19 +145,15 @@ void AP_HoTT_Telem::update_data(uint8_t control_mode, uint32_t wp_distance, int3
         _last_delay_1s = AP_HAL::millis();
 
         // update vario data
-        if (_current_loc.flags.relative_alt) {
-            processClimbrate(_current_loc.alt);
-        } else {
-            processClimbrate(_current_loc.alt - _ahrs.get_home().alt);
-        }
+        process_climbrate(get_altitude_rel());
 
         // update electrical time
-        if(_armed)
+        if (_armed)
             _electric_time++;
 
         // perform checks
-        eamCheck_mAh();
-        eamCheck_mainPower();
+        eam_check_mah();
+        eam_check_main_power();
 
         // Alarm scheduler
         _alarms.scheduler();
@@ -192,20 +188,20 @@ void AP_HoTT_Telem::hott_tick(void)
 
     // check if there is any data to send
     switch(_hott_status) {
-        case HottSendGPS:
-            send_data((uint8_t*)&_hott_gps_msg);
-            break;
+    case HottSendGPS:
+        send_data((uint8_t*)&_hott_gps_msg);
+        break;
 
-        case HottSendEAM:
-            send_data((uint8_t*)&_hott_eam_msg);
-            break;
+    case HottSendEAM:
+        send_data((uint8_t*)&_hott_eam_msg);
+        break;
 
-        case HottSendVario:
-            send_data((uint8_t*)&_hott_vario_msg);
-            break;
+    case HottSendVario:
+        send_data((uint8_t*)&_hott_vario_msg);
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 
     // ignore any new requests until the entire data frame is sent
@@ -233,24 +229,24 @@ void AP_HoTT_Telem::hott_tick(void)
             _checksum = 0;
 
             switch (readbyte) {
-                case GPS_SENSOR_ID:
-                    _hott_status = HottSendGPS;
-                    _current_msg_size = sizeof(struct HOTT_GPS_MSG);
-                    break;
+            case GPS_SENSOR_ID:
+                _hott_status = HottSendGPS;
+                _current_msg_size = sizeof(struct HOTT_GPS_MSG);
+                break;
 
-                case EAM_SENSOR_ID:
-                    _hott_status = HottSendEAM;
-                    _current_msg_size = sizeof(struct HOTT_EAM_MSG);
-                    break;
+            case EAM_SENSOR_ID:
+                _hott_status = HottSendEAM;
+                _current_msg_size = sizeof(struct HOTT_EAM_MSG);
+                break;
 
-                case VARIO_SENSOR_ID:
-                    _hott_status = HottSendVario;
-                    _current_msg_size = sizeof(struct HOTT_VARIO_MSG);
-                    break;
+            case VARIO_SENSOR_ID:
+                _hott_status = HottSendVario;
+                _current_msg_size = sizeof(struct HOTT_VARIO_MSG);
+                break;
 
-                default:
-                    _hott_status = HottIdle;
-                    break;
+            default:
+                _hott_status = HottIdle;
+                break;
             }
         }
     }
@@ -279,7 +275,7 @@ void AP_HoTT_Telem::send_data(uint8_t *buffer)
     }
 }
 
-void AP_HoTT_Telem::convertLatLong(float degree, uint8_t &posNS_EW, uint16_t &degMinutes, uint16_t &degSeconds)
+void AP_HoTT_Telem::convert_lat_long(float degree, uint8_t &posNS_EW, uint16_t &degMinutes, uint16_t &degSeconds)
 {
     degree = degree / 10000000.0f;
     if (degree >= 0) {
@@ -297,43 +293,43 @@ void AP_HoTT_Telem::convertLatLong(float degree, uint8_t &posNS_EW, uint16_t &de
     degMinutes = (deg * 100) + minu;
 }
 
-// processClimbrate - calculates and maintans climbrate changes
+// process_climbrate - calculates and maintans climbrate changes
 //  called every 1s with current altitude as input
-void AP_HoTT_Telem::processClimbrate(int16_t currentAltitude)
+void AP_HoTT_Telem::process_climbrate(int16_t current_altitude)
 {
-    static int16_t altitudeData[ALTITUDE_HISTORY_DATA_COUNT];   //all values in cm
-    static int8_t nextData = -1;
-    static bool gotAllDatapoints = false;
+    static int16_t altitude_data[ALTITUDE_HISTORY_DATA_COUNT];   //all values in cm
+    static int8_t next_data = -1;
+    static bool got_all_datapoints = false;
 
     //clear data?
-    if(nextData == -1) {
-        for(int i = 0; i < ALTITUDE_HISTORY_DATA_COUNT; i++)
-            altitudeData[i] = 0;
-        nextData = 0;
+    if (next_data == -1) {
+        for (int i = 0; i < ALTITUDE_HISTORY_DATA_COUNT; i++)
+            altitude_data[i] = 0;
+        next_data = 0;
     }
 
     // save next altitude data
-    int8_t x = nextData;
-    altitudeData[nextData++] = currentAltitude;
-    if(nextData == ALTITUDE_HISTORY_DATA_COUNT) {
-        nextData = 0;
-        if(!gotAllDatapoints) {
-            gotAllDatapoints = true;    //ready for calculations
+    int8_t x = next_data;
+    altitude_data[next_data++] = current_altitude;
+    if (next_data == ALTITUDE_HISTORY_DATA_COUNT) {
+        next_data = 0;
+        if (!got_all_datapoints) {
+            got_all_datapoints = true;    //ready for calculations
         }
     }
-    if(!gotAllDatapoints)   //wait for all data points requred for calculation
+    if (!got_all_datapoints)   //wait for all data points requred for calculation
         return;
 
     int8_t y = (x - 1 < 0) ? ALTITUDE_HISTORY_DATA_COUNT - 1 : x - 1;
-    _climbrate1s = altitudeData[x] - altitudeData[y];
+    _climbrate1s = altitude_data[x] - altitude_data[y];
 
     y = (x - 2 < 0) ? ALTITUDE_HISTORY_DATA_COUNT + (x - 2) : x - 2;
-    _climbrate3s = altitudeData[x] - altitudeData[y];
+    _climbrate3s = altitude_data[x] - altitude_data[y];
 
 #if ALTITUDE_HISTORY_DATA_COUNT != 10
 #error "ALTITUDE_HISTORY_DATA_COUNT has to be 10... or adapt the code below!"
 #endif
-    _climbrate10s = altitudeData[x] - altitudeData[nextData];
+    _climbrate10s = altitude_data[x] - altitude_data[next_data];
 }
 
 uint16_t AP_HoTT_Telem::get_altitude_rel()
@@ -367,51 +363,51 @@ void AP_HoTT_Telem::update_gps_data()
 
     // GPS Status
     switch(gps.status()) {
-        case AP_GPS::GPS_OK_FIX_3D:
-            _hott_gps_msg.alarm_invers2 = 0;
-            _hott_gps_msg.gps_fix_char  = '3';
-            _hott_gps_msg.free_char3    = '3';  //3D Fix according to specs...
-            break;
+    case AP_GPS::GPS_OK_FIX_3D:
+        _hott_gps_msg.alarm_invers2 = 0;
+        _hott_gps_msg.gps_fix_char  = '3';
+        _hott_gps_msg.free_char3    = '3';  //3D Fix according to specs...
+        break;
 
-        case AP_GPS::GPS_OK_FIX_2D:
-            //No GPS Fix
-            _hott_gps_msg.alarm_invers2 = 1;
-            _hott_gps_msg.gps_fix_char  = '2';
-            _hott_gps_msg.free_char3    = '2';
-            (uint16_t &)_hott_gps_msg.home_distance_L = 0; // set distance to 0 since there is no GPS signal
-            break;
+    case AP_GPS::GPS_OK_FIX_2D:
+        //No GPS Fix
+        _hott_gps_msg.alarm_invers2 = 1;
+        _hott_gps_msg.gps_fix_char  = '2';
+        _hott_gps_msg.free_char3    = '2';
+        (uint16_t &)_hott_gps_msg.home_distance_L = 0; // set distance to 0 since there is no GPS signal
+        break;
 
-        default:
-            //No GPS Fix
-            _hott_gps_msg.alarm_invers2 = 1;
-            _hott_gps_msg.gps_fix_char  = '-';
-            _hott_gps_msg.free_char3    = '-';
-            (uint16_t &)_hott_gps_msg.home_distance_L = 0; // set distance to 0 since there is no GPS signal
+    default:
+        //No GPS Fix
+        _hott_gps_msg.alarm_invers2 = 1;
+        _hott_gps_msg.gps_fix_char  = '-';
+        _hott_gps_msg.free_char3    = '-';
+        (uint16_t &)_hott_gps_msg.home_distance_L = 0; // set distance to 0 since there is no GPS signal
     }
 
     // Home distance
     switch(_mode) {
-        case AUTO:
-        case LOITER:
-            //Use home direction field to display direction an distance to next waypoint
-            (uint16_t &)_hott_gps_msg.home_distance_L = _wp_distance / 100;
-            _hott_gps_msg.home_direction = _wp_bearing / 200;
-            _hott_gps_msg.free_char1 = 'W';
-            _hott_gps_msg.free_char2 = 'P';
-            break;
+    case AUTO:
+    case LOITER:
+        //Use home direction field to display direction an distance to next waypoint
+        (uint16_t &)_hott_gps_msg.home_distance_L = _wp_distance / 100;
+        _hott_gps_msg.home_direction = _wp_bearing / 200;
+        _hott_gps_msg.free_char1 = 'W';
+        _hott_gps_msg.free_char2 = 'P';
+        break;
 
-        default:
-            //Display Home direction and distance
-            (uint16_t &)_hott_gps_msg.home_distance_L = _home_distance / 100;
-            _hott_gps_msg.home_direction = _home_bearing / 200;
-            _hott_gps_msg.free_char1 = 'H';
-            _hott_gps_msg.free_char2 = 'O';
-            break;
+    default:
+        //Display Home direction and distance
+        (uint16_t &)_hott_gps_msg.home_distance_L = _home_distance / 100;
+        _hott_gps_msg.home_direction = _home_bearing / 200;
+        _hott_gps_msg.free_char1 = 'H';
+        _hott_gps_msg.free_char2 = 'O';
+        break;
     }
 
     // Coordinates
-    convertLatLong(gps.location().lat, (uint8_t &)_hott_gps_msg.pos_NS, (uint16_t &)_hott_gps_msg.pos_NS_dm_L, (uint16_t &)_hott_gps_msg.pos_NS_sec_L);
-    convertLatLong(gps.location().lng, (uint8_t &)_hott_gps_msg.pos_EW, (uint16_t &)_hott_gps_msg.pos_EW_dm_L, (uint16_t &)_hott_gps_msg.pos_EW_sec_L);
+    convert_lat_long(gps.location().lat, (uint8_t &)_hott_gps_msg.pos_NS, (uint16_t &)_hott_gps_msg.pos_NS_dm_L, (uint16_t &)_hott_gps_msg.pos_NS_sec_L);
+    convert_lat_long(gps.location().lng, (uint8_t &)_hott_gps_msg.pos_EW, (uint16_t &)_hott_gps_msg.pos_EW_dm_L, (uint16_t &)_hott_gps_msg.pos_EW_sec_L);
 
     // Satelite Count
     _hott_gps_msg.gps_satelites = gps.num_sats();
@@ -471,7 +467,7 @@ void AP_HoTT_Telem::update_eam_data()
     _hott_eam_msg.alarm_invers1 = 0;
     _hott_eam_msg.alarm_invers2 = 0;
     _hott_eam_msg.warning_beeps = 0;
-    if(_alarms.getAlarmForProfileId(EAM_SENSOR_ID, e) != 0) {
+    if (_alarms.get_alarm_for_profile_id(EAM_SENSOR_ID, e) != 0) {
         _hott_eam_msg.warning_beeps = e.alarm_num;
     }
     _hott_eam_msg.alarm_invers1 = e.visual_alarm1;
@@ -497,12 +493,12 @@ void AP_HoTT_Telem::update_vario_data()
     (uint16_t &)_hott_vario_msg.altitude_L = get_altitude_rel();
 
     // Altitude Max
-    if(_hott_vario_msg.altitude_L > max_altitude && _armed) //calc only in ARMED mode
+    if (_hott_vario_msg.altitude_L > max_altitude && _armed) //calc only in ARMED mode
         max_altitude = _hott_vario_msg.altitude_L;
     (int16_t &)_hott_vario_msg.altitude_max_L = 500 + (max_altitude / 100);
 
     // Altitude Min
-    if(_hott_vario_msg.altitude_L < min_altitude && _armed) //calc only in ARMED mode
+    if (_hott_vario_msg.altitude_L < min_altitude && _armed) //calc only in ARMED mode
         min_altitude = _hott_vario_msg.altitude_L;
     (int16_t &)_hott_vario_msg.altitude_min_L = 500 + (min_altitude / 100);
 
@@ -515,39 +511,39 @@ void AP_HoTT_Telem::update_vario_data()
     _hott_vario_msg.compass_direction = ToDeg(_ahrs.get_compass()->calculate_heading(_ahrs.get_rotation_body_to_ned())) / 2;
 
     // Armed Text
-    char *pArmedStr = (char *)DISARMED_STR;
+    char *armed_str = (char *)DISARMED_STR;
     if (_armed) {
-        pArmedStr = (char *)ARMED_STR;
+        armed_str = (char *)ARMED_STR;
     }
 
     // Clear line
     memset(_hott_vario_msg.text_msg, 0x20, VARIO_MSG_TEXT_LEN);
 
     // Armed Mode
-    uint8_t len = strlen(pArmedStr);
-    memcpy((uint8_t*)_hott_vario_msg.text_msg, pArmedStr, len);
+    uint8_t len = strlen(armed_str);
+    memcpy((uint8_t*)_hott_vario_msg.text_msg, armed_str, len);
 
     // Flight Mode
     memcpy((uint8_t*)&_hott_vario_msg.text_msg[len + 1], hott_flight_mode_strings[_mode], strlen(hott_flight_mode_strings[_mode]));
 }
 
-// eamCheck_mAh - check for used mAh
-void AP_HoTT_Telem::eamCheck_mAh(void)
+// eam_check_mah - check for used mAh
+void AP_HoTT_Telem::eam_check_mah(void)
 {
     uint32_t battery_pack_capacity = 0;
 
     enum ap_var_type var_type;
     AP_Param *vp;
     vp = AP_Param::find("BATT_CAPACITY", &var_type);
-    if(vp != NULL) {
-        if(var_type == AP_PARAM_INT32) {
+    if (vp != NULL) {
+        if (var_type == AP_PARAM_INT32) {
             battery_pack_capacity = ((AP_Int32 *)vp)->get();
         }
     } else {
         battery_pack_capacity = 0;  //not found
     }
 
-    if((battery_pack_capacity < _battery.current_total_mah()) && (battery_pack_capacity > 0 )) {
+    if ((battery_pack_capacity < _battery.current_total_mah()) && (battery_pack_capacity > 0 )) {
         AP_HoTT_Alarm::HoTT_Alarm_Event_t hott_eam_alarm_event;
         hott_eam_alarm_event.alarm_time = 6;   // 1sec units
         hott_eam_alarm_event.alarm_time_replay = 15;   // 1sec units
@@ -559,28 +555,28 @@ void AP_HoTT_Telem::eamCheck_mAh(void)
     }
 }
 
-// eamCheck_mainPower - check for low batteries
-void AP_HoTT_Telem::eamCheck_mainPower(void)
+// eam_check_main_power - check for low batteries
+void AP_HoTT_Telem::eam_check_main_power(void)
 {
-    static uint8_t lowVoltageCounter = 0;
+    static uint8_t low_voltage_counter = 0;
     float main_battery_low_voltage = 0;
 
     enum ap_var_type var_type;
     AP_Param *vp;
 
     vp = AP_Param::find("FS_BATT_VOLTAGE", &var_type);
-    if(vp != NULL) {
-        if(var_type == AP_PARAM_FLOAT) {
+    if (vp != NULL) {
+        if (var_type == AP_PARAM_FLOAT) {
           main_battery_low_voltage = ((AP_Float *)vp)->get();
         }
     } else {
         main_battery_low_voltage = 0.0f;
     }
 
-    if((_battery.voltage() <= main_battery_low_voltage)  && _battery.voltage() > 0.0) {
-        if(lowVoltageCounter < LOW_VOLTAGE_TIMESPAN) {
+    if ((_battery.voltage() <= main_battery_low_voltage)  && _battery.voltage() > 0.0) {
+        if (low_voltage_counter < LOW_VOLTAGE_TIMESPAN) {
             // voltage should be low for at least for LOW_VOLTAGE_TIMESPAN seconds
-            lowVoltageCounter++;
+            low_voltage_counter++;
             return;
         }
 
@@ -594,6 +590,6 @@ void AP_HoTT_Telem::eamCheck_mainPower(void)
 
         _alarms.add(&hott_eam_alarm_event);
     } else {
-        lowVoltageCounter = 0;
+        low_voltage_counter = 0;
     }
 }

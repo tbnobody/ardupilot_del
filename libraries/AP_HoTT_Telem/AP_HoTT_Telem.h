@@ -29,8 +29,7 @@
 #include "../../ArduCopter/defines.h"
 #endif
 
-class AP_HoTT_Telem
-{
+class AP_HoTT_Telem {
 public:
     //constructor
     AP_HoTT_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, Location &current_loc, AP_Baro &barometer);
@@ -61,18 +60,18 @@ private:
 	  // update_vario_data - writes data into _hott_vario_msg struct
 	  void update_vario_data();
 
-	  // convertLatLong
-	  void convertLatLong(float degree, uint8_t &posNS_EW, uint16_t &degMinutes, uint16_t &degSeconds);
+	  // convert_lat_long
+	  void convert_lat_long(float degree, uint8_t &posNS_EW, uint16_t &degMinutes, uint16_t &degSeconds);
 
     // processClimbrate - calculates and maintans climbrate changes
     //  called every 1s with current altitude as input
-    void processClimbrate(int16_t currentAltitude);
+    void process_climbrate(int16_t current_altitude);
 
-    // eamCheck_mAh - check for used mAh
-    void eamCheck_mAh(void);
+    // eam_check_mah - check for used mAh
+    void eam_check_mah(void);
 
-    // eamCheck_mainPower - check for low batteries
-    void eamCheck_mainPower(void);
+    // eam_check_main_power - check for low batteries
+    void eam_check_main_power(void);
 
 	  // get_altitude_rel - get relative altitude from ground
 	  uint16_t get_altitude_rel();
