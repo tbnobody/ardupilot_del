@@ -49,19 +49,19 @@ private:
     void hott_tick();
 
     // send_data - sends data from specified struct to uart
-		void send_data(uint8_t *buffer);
+    void send_data(uint8_t *buffer);
 
-		// update_gps_data - writes data into _hott_gps_msg struct
-	  void update_gps_data();
+    // update_gps_data - writes data into _hott_gps_msg struct
+    void update_gps_data();
 
-	  // update_eam_data - writes data into _hott_eam_msg struct
-	  void update_eam_data();
+    // update_eam_data - writes data into _hott_eam_msg struct
+    void update_eam_data();
 
-	  // update_vario_data - writes data into _hott_vario_msg struct
-	  void update_vario_data();
+    // update_vario_data - writes data into _hott_vario_msg struct
+    void update_vario_data();
 
-	  // convert_lat_long
-	  void convert_lat_long(float degree, uint8_t &posNS_EW, uint16_t &degMinutes, uint16_t &degSeconds);
+    // convert_lat_long
+    void convert_lat_long(float degree, uint8_t &posNS_EW, uint16_t &degMinutes, uint16_t &degSeconds);
 
     // processClimbrate - calculates and maintans climbrate changes
     //  called every 1s with current altitude as input
@@ -73,8 +73,8 @@ private:
     // eam_check_main_power - check for low batteries
     void eam_check_main_power(void);
 
-	  // get_altitude_rel - get relative altitude from ground
-	  uint16_t get_altitude_rel();
+    // get_altitude_rel - get relative altitude from ground
+    uint16_t get_altitude_rel();
 
     AP_AHRS &_ahrs;                         // reference to attitude estimate
     AP_BattMonitor &_battery;               // reference to battery monitor object
