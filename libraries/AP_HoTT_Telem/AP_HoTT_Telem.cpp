@@ -583,7 +583,7 @@ void AP_HoTT_Telem::eam_check_main_power(void)
         main_battery_low_voltage = 0.0f;
     }
 
-    if ((_battery.voltage() <= main_battery_low_voltage)  && _battery.voltage() > 0.0) {
+    if ((_battery.voltage() <= main_battery_low_voltage)  && _battery.voltage() > 0.1) {
         if (low_voltage_counter < LOW_VOLTAGE_TIMESPAN) {
             // voltage should be low for at least for LOW_VOLTAGE_TIMESPAN seconds
             low_voltage_counter++;
