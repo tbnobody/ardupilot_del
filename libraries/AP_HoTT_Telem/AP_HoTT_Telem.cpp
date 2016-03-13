@@ -271,6 +271,13 @@ void AP_HoTT_Telem::send_data(uint8_t *buffer)
         } else {
             _hott_status = HottIdle;
         }
+    } else {
+        // HoTT-Idle-Line-Protocol
+        // If some data is received during the wait phase we have to assume it's
+        // from another sensor and ignore the request
+        if (_current_delay_ms == POST_READ_DELAY_IN_MS && _port->available() > 0) {
+            _hott_status = HottIdle;
+        }
     }
 }
 
