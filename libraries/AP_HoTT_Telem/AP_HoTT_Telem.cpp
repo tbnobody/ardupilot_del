@@ -73,7 +73,6 @@ AP_HoTT_Telem::AP_HoTT_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, Location &c
     _last_delay_ms(0),
     _last_delay_1s(0),
     _hott_status(HOTT_IDLE),
-    _current_msg_size(0),
     _current_msg_pos(0),
     _checksum(0),
     _climbrate1s(0),
@@ -195,15 +194,15 @@ void AP_HoTT_Telem::hott_tick(void)
     // check if there is any data to send
     switch (_hott_status) {
     case HOTT_SEND_GPS:
-        send_data((uint8_t*)&_hott_gps_msg);
+        send_data((uint8_t*)&_hott_gps_msg, sizeof(struct HOTT_GPS_MSG));
         break;
 
     case HOTT_SEND_EAM:
-        send_data((uint8_t*)&_hott_eam_msg);
+        send_data((uint8_t*)&_hott_eam_msg, sizeof(struct HOTT_EAM_MSG));
         break;
 
     case HOTT_SEND_VARIO:
-        send_data((uint8_t*)&_hott_vario_msg);
+        send_data((uint8_t*)&_hott_vario_msg, sizeof(struct HOTT_VARIO_MSG));
         break;
 
     default:
@@ -227,9 +226,11 @@ void AP_HoTT_Telem::hott_tick(void)
         int16_t readbyte = _port->read();
         if (_hott_status == HOTT_IDLE) {
             if (readbyte == BINARY_MODE_REQUEST_ID) {
-                _hott_status = HOTT_RCV_MODE;
+                _hott_status = HOTT_RCV_MODE_BINARY;
+            } else if (readbyte == TEXT_MODE_REQUEST_ID) {
+                _hott_status = HOTT_RCV_MODE_TEXT;
             }
-        } else {
+        } else if (_hott_status == HOTT_RCV_MODE_BINARY) {
             _current_msg_pos = 0;
             _current_delay_ms = POST_READ_DELAY_IN_MS;
             _checksum = 0;
@@ -237,35 +238,34 @@ void AP_HoTT_Telem::hott_tick(void)
             switch (readbyte) {
             case GPS_SENSOR_ID:
                 _hott_status = HOTT_SEND_GPS;
-                _current_msg_size = sizeof(struct HOTT_GPS_MSG);
                 break;
 
             case EAM_SENSOR_ID:
                 _hott_status = HOTT_SEND_EAM;
-                _current_msg_size = sizeof(struct HOTT_EAM_MSG);
                 break;
 
             case VARIO_SENSOR_ID:
                 _hott_status = HOTT_SEND_VARIO;
-                _current_msg_size = sizeof(struct HOTT_VARIO_MSG);
                 break;
 
             default:
                 _hott_status = HOTT_IDLE;
                 break;
             }
+        } else if (_hott_status == HOTT_RCV_MODE_TEXT) {
+            _hott_status = HOTT_IDLE;
         }
     }
 }
 
-void AP_HoTT_Telem::send_data(uint8_t *buffer)
+void AP_HoTT_Telem::send_data(uint8_t *buffer, size_t current_msg_size)
 {
     uint32_t now = AP_HAL::millis();
     if (now - _last_delay_ms > _current_delay_ms) {
         _last_delay_ms = AP_HAL::millis();
 
-        if (_current_msg_pos < _current_msg_size) {
-            if (_current_msg_pos == _current_msg_size - 1) {
+        if (_current_msg_pos < current_msg_size) {
+            if (_current_msg_pos == current_msg_size - 1) {
                 /* Set the checksum: the first uint8_t is taken as the checksum. */
                 buffer[_current_msg_pos] = _checksum & 0xff;
             } else {

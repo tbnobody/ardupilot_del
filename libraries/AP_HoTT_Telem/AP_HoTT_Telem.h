@@ -49,7 +49,7 @@ private:
     void hott_tick();
 
     // send_data - sends data from specified struct to uart
-    void send_data(uint8_t *buffer);
+    void send_data(uint8_t *buffer, size_t current_msg_size);
 
     // update_gps_data - writes data into _hott_gps_msg struct
     void update_gps_data();
@@ -95,12 +95,14 @@ private:
     uint32_t _last_delay_1s;
 
     enum hott_status {
-        HOTT_IDLE = 0,
-        HOTT_RCV_MODE = 1,
-        HOTT_RCV_ID = 2,
-        HOTT_SEND_GPS = 3,
-        HOTT_SEND_EAM = 4,
-        HOTT_SEND_VARIO = 5
+        HOTT_IDLE,
+        HOTT_RCV_MODE_BINARY,
+        HOTT_RCV_MODE_TEXT,
+        HOTT_RCV_ID,
+        HOTT_SEND_GPS,
+        HOTT_SEND_EAM,
+        HOTT_SEND_VARIO,
+        HOTT_SEND_TEXT
     };
 
     hott_status _hott_status;
@@ -109,7 +111,6 @@ private:
     struct HOTT_EAM_MSG _hott_eam_msg;
     struct HOTT_VARIO_MSG _hott_vario_msg;
 
-    size_t _current_msg_size;
     size_t _current_msg_pos;
     uint16_t _checksum;
 
