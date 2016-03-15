@@ -134,9 +134,16 @@ void AP_HoTT_Telem::update_data(uint8_t control_mode, uint32_t wp_distance, int3
     _home_bearing = home_bearing;
     _armed = armed;
 
-    update_gps_data();
-    update_eam_data();
-    update_vario_data();
+    // Update only if not sending
+    if (_hott_status != HottSendGPS) {
+        update_gps_data();
+    }
+    if (_hott_status != HottSendEAM) {
+        update_eam_data();
+    }
+    if (_hott_status != HottSendVario) {
+        update_vario_data();
+    }
 
     // Things to be done every 1 sec
     if (AP_HAL::millis() - _last_delay_1s > 1000) {
