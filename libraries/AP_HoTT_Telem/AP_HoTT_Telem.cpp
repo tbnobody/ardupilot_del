@@ -72,7 +72,7 @@ AP_HoTT_Telem::AP_HoTT_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, Location &c
     _current_delay_ms(0),
     _last_delay_ms(0),
     _last_delay_1s(0),
-    _hott_status(HottIdle),
+    _hott_status(HOTT_IDLE),
     _current_msg_size(0),
     _current_msg_pos(0),
     _checksum(0),
@@ -135,13 +135,13 @@ void AP_HoTT_Telem::update_data(uint8_t control_mode, uint32_t wp_distance, int3
     _armed = armed;
 
     // Update only if not sending
-    if (_hott_status != HottSendGPS) {
+    if (_hott_status != HOTT_SEND_GPS) {
         update_gps_data();
     }
-    if (_hott_status != HottSendEAM) {
+    if (_hott_status != HOTT_SEND_EAM) {
         update_eam_data();
     }
-    if (_hott_status != HottSendVario) {
+    if (_hott_status != HOTT_SEND_VARIO) {
         update_vario_data();
     }
 
@@ -194,15 +194,15 @@ void AP_HoTT_Telem::hott_tick(void)
 
     // check if there is any data to send
     switch (_hott_status) {
-    case HottSendGPS:
+    case HOTT_SEND_GPS:
         send_data((uint8_t*)&_hott_gps_msg);
         break;
 
-    case HottSendEAM:
+    case HOTT_SEND_EAM:
         send_data((uint8_t*)&_hott_eam_msg);
         break;
 
-    case HottSendVario:
+    case HOTT_SEND_VARIO:
         send_data((uint8_t*)&_hott_vario_msg);
         break;
 
@@ -211,7 +211,7 @@ void AP_HoTT_Telem::hott_tick(void)
     }
 
     // ignore any new requests until the entire data frame is sent
-    if (_hott_status > HottRcvId) {
+    if (_hott_status > HOTT_RCV_ID) {
         return;
     }
 
@@ -225,9 +225,9 @@ void AP_HoTT_Telem::hott_tick(void)
 
     for (int16_t i = 0; i < numc; i++) {
         int16_t readbyte = _port->read();
-        if (_hott_status == HottIdle) {
+        if (_hott_status == HOTT_IDLE) {
             if (readbyte == BINARY_MODE_REQUEST_ID) {
-                _hott_status = HottRcvMode;
+                _hott_status = HOTT_RCV_MODE;
             }
         } else {
             _current_msg_pos = 0;
@@ -236,22 +236,22 @@ void AP_HoTT_Telem::hott_tick(void)
 
             switch (readbyte) {
             case GPS_SENSOR_ID:
-                _hott_status = HottSendGPS;
+                _hott_status = HOTT_SEND_GPS;
                 _current_msg_size = sizeof(struct HOTT_GPS_MSG);
                 break;
 
             case EAM_SENSOR_ID:
-                _hott_status = HottSendEAM;
+                _hott_status = HOTT_SEND_EAM;
                 _current_msg_size = sizeof(struct HOTT_EAM_MSG);
                 break;
 
             case VARIO_SENSOR_ID:
-                _hott_status = HottSendVario;
+                _hott_status = HOTT_SEND_VARIO;
                 _current_msg_size = sizeof(struct HOTT_VARIO_MSG);
                 break;
 
             default:
-                _hott_status = HottIdle;
+                _hott_status = HOTT_IDLE;
                 break;
             }
         }
@@ -276,14 +276,14 @@ void AP_HoTT_Telem::send_data(uint8_t *buffer)
             _current_delay_ms = POST_WRITE_DELAY_IN_MS;
             _current_msg_pos++;
         } else {
-            _hott_status = HottIdle;
+            _hott_status = HOTT_IDLE;
         }
     } else {
         // HoTT-Idle-Line-Protocol
         // If some data is received during the wait phase we have to assume it's
         // from another sensor and ignore the request
         if (_current_delay_ms == POST_READ_DELAY_IN_MS && _port->available() > 0) {
-            _hott_status = HottIdle;
+            _hott_status = HOTT_IDLE;
         }
     }
 }

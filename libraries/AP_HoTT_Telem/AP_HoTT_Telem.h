@@ -94,16 +94,16 @@ private:
     uint32_t _last_delay_ms;
     uint32_t _last_delay_1s;
 
-    enum HottStatus {
-        HottIdle = 0,
-        HottRcvMode = 1,
-        HottRcvId = 2,
-        HottSendGPS = 3,
-        HottSendEAM = 4,
-        HottSendVario = 5
+    enum hott_status {
+        HOTT_IDLE = 0,
+        HOTT_RCV_MODE = 1,
+        HOTT_RCV_ID = 2,
+        HOTT_SEND_GPS = 3,
+        HOTT_SEND_EAM = 4,
+        HOTT_SEND_VARIO = 5
     };
 
-    HottStatus _hott_status;
+    hott_status _hott_status;
 
     struct HOTT_GPS_MSG _hott_gps_msg;
     struct HOTT_EAM_MSG _hott_eam_msg;
