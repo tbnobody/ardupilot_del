@@ -78,7 +78,8 @@ AP_HoTT_Telem::AP_HoTT_Telem(AP_AHRS &ahrs, AP_BattMonitor &battery, Location &c
     _climbrate1s(0),
     _climbrate3s(0),
     _climbrate10s(0),
-    _electric_time(0)
+    _electric_time(0),
+    _text_mode(_hott_text_msg)
 {}
 
 // init - perform require initialisation including detecting which protocol to use
@@ -112,6 +113,11 @@ void AP_HoTT_Telem::init(const AP_SerialManager& serial_manager)
         _hott_vario_msg.vario_sensor_id = VARIO_SENSOR_ID;
         _hott_vario_msg.sensor_id       = VARIO_SENSOR_TEXT_ID;
         _hott_vario_msg.stop_byte       = BINARY_MODE_STOP_BYTE;
+
+        // Init Text Mode Message
+        memset(&_hott_text_msg, 0, sizeof(struct HOTT_TEXTMODE_MSG));
+        _hott_text_msg.start_byte = TEXT_MODE_START_BYTE;
+        _hott_text_msg.stop_byte  = TEXT_MODE_STOP_BYTE;
     }
 }
 
@@ -205,6 +211,10 @@ void AP_HoTT_Telem::hott_tick(void)
         send_data((uint8_t*)&_hott_vario_msg, sizeof(struct HOTT_VARIO_MSG));
         break;
 
+    case HOTT_SEND_TEXT:
+        send_data((uint8_t*)&_hott_text_msg, sizeof(struct HOTT_TEXTMODE_MSG));
+        break;
+
     default:
         break;
     }
@@ -253,6 +263,22 @@ void AP_HoTT_Telem::hott_tick(void)
                 break;
             }
         } else if (_hott_status == HOTT_RCV_MODE_TEXT) {
+            _current_msg_pos = 0;
+            _current_delay_ms = POST_READ_DELAY_IN_MS;
+            _checksum = 0;
+
+            uint8_t sensor_type = (readbyte >> 4);
+
+            // Text Mode is only handled if not armed
+            // and sensor type matches GPS sensor
+            if (!_armed && (sensor_type == (GPS_SENSOR_ID & 0x0f))) {
+                _text_mode.handle((uint8_t)readbyte);
+                _hott_status = HOTT_SEND_TEXT;
+            } else {
+                _hott_status = HOTT_IDLE;
+            }
+
+        } else {
             _hott_status = HOTT_IDLE;
         }
     }

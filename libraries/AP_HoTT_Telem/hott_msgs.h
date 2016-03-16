@@ -47,6 +47,11 @@ struct HOTT_TEXTMODE_MSG {
     int8_t parity;      //#172 Checksum / parity
 };
 
+#define TEXT_MODE_KEY_ESC 0x7
+#define TEXT_MODE_KEY_SET 0x9
+#define TEXT_MODE_KEY_INC 0xd
+#define TEXT_MODE_KEY_DEC 0xb
+#define TEXT_MODE_KEY_ENTER 0xe
 
 /* General Air Module (GAM) constants. Graupner #33611 */
 #define GAM_SENSOR_ID           0x8d

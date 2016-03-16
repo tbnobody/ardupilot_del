@@ -23,6 +23,7 @@
 #include <AP_Common/AP_Common.h>
 #include <AP_Compass/AP_Compass.h>
 #include "AP_HoTT_Alarm.h"
+#include "AP_HoTT_TextMode.h"
 #include "hott_msgs.h"
 
 #if APM_BUILD_TYPE(APM_BUILD_ArduCopter)
@@ -110,6 +111,7 @@ private:
     struct HOTT_GPS_MSG _hott_gps_msg;
     struct HOTT_EAM_MSG _hott_eam_msg;
     struct HOTT_VARIO_MSG _hott_vario_msg;
+    struct HOTT_TEXTMODE_MSG _hott_text_msg;
 
     size_t _current_msg_pos;
     uint16_t _checksum;
@@ -123,6 +125,7 @@ private:
     uint32_t _electric_time;  //time in ARMED mode in seconds
 
     AP_HoTT_Alarm _alarms;
+    AP_HoTT_TextMode _text_mode;
 
 };
 #endif
